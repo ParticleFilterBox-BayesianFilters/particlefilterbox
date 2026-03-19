@@ -1,0 +1,108 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "particlefilterbox"
+dynamic = ["version"]
+description = "Particle filtering and Sequential Monte Carlo methods in Python"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "NodeSEcon" },
+]
+keywords = [
+    "particle filter",
+    "sequential monte carlo",
+    "state space models",
+    "bayesian inference",
+    "stochastic volatility",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+viz = [
+    "matplotlib>=3.7",
+]
+cli = [
+    "typer>=0.9",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "pymdown-extensions>=10.0",
+]
+accel = [
+    "numba>=0.58",
+]
+gpu = [
+    "cupy>=12.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "pyright>=1.1",
+    "matplotlib>=3.7",
+    "typer>=0.9",
+]
+all = [
+    "particlefilterbox[viz,cli,docs,accel]",
+]
+
+[project.scripts]
+pfbox = "particlefilterbox.cli.main:app"
+
+[project.urls]
+Documentation = "https://nodesecon.github.io/particlefilterbox/"
+Repository = "https://github.com/nodesecon/particlefilterbox"
+Issues = "https://github.com/nodesecon/particlefilterbox/issues"
+
+[tool.hatch.build.targets.sdist]
+exclude = [".venv/", "logs/", "tests/", "docs/"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["particlefilterbox"]
+
+[tool.hatch.version]
+path = "particlefilterbox/__version__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests",
+    "benchmark: marks benchmark tests",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"particlefilterbox/cli/*.py" = ["B008"]
+"tests/integration/*.py" = ["N803", "N806"]
+"tests/validation/*.py" = ["N803", "N806"]
+"tests/benchmarks/*.py" = ["N803", "N806"]
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"

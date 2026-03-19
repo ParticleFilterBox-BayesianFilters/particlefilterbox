@@ -1,0 +1,77 @@
+site_name: particlefilterbox
+site_description: Particle filtering and Sequential Monte Carlo methods in Python
+site_url: https://nodesecon.github.io/particlefilterbox/
+repo_url: https://github.com/nodesecon/particlefilterbox
+repo_name: nodesecon/particlefilterbox
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+    - search.suggest
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - User Guide:
+    - Particle Filters: guide/particle_filters.md
+    - Smoothers: guide/smoothers.md
+    - SMC Methods: guide/smc.md
+    - PMCMC: guide/pmcmc.md
+    - Models: guide/models.md
+    - Visualization: guide/visualization.md
+    - Reports: guide/reports.md
+    - CLI: guide/cli.md
+  - API Reference:
+    - Core: api/core.md
+    - Filters: api/filters.md
+    - Smoothers: api/smoothers.md
+    - SMC: api/smc.md
+    - PMCMC: api/pmcmc.md
+    - Models: api/models.md
+    - Visualization: api/visualization.md
+    - Reports: api/reports.md
+    - Datasets: api/datasets.md
+  - Examples:
+    - Stochastic Volatility: examples/sv.md
+    - Linear Gaussian: examples/linear_gaussian.md
+  - Changelog: changelog.md
+
+plugins:
+  - search

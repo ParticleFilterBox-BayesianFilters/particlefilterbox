@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.hypothesis/
+.mutmut-cache
+mutants/
+
+# IDE
+.vscode/
+.idea/
+
+# Docs
+site/
+
+# Logs
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
