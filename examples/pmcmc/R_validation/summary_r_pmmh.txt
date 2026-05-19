@@ -1,0 +1,24 @@
+PMMH Validation Summary (pomp::pmcmc)
+================================================== 
+
+Configuration:
+  Particles: 200 
+  MCMC iterations: 2000 
+  Burn-in: 500 
+  Posterior samples: 1501 
+
+True parameters: mu=-1.0, phi=0.97, sigma_h=0.15
+
+Posterior summary:
+       mu               phi       sigma_h         
+ Min.   :-2.0808   Min.   :1   Min.   :0.000e+00  
+ 1st Qu.:-1.3440   1st Qu.:1   1st Qu.:4.609e-06  
+ Median :-1.0956   Median :1   Median :3.851e-02  
+ Mean   :-1.1526   Mean   :1   Mean   :4.301e-02  
+ 3rd Qu.:-0.9406   3rd Qu.:1   3rd Qu.:6.912e-02  
+ Max.   :-0.2779   Max.   :1   Max.   :2.132e-01  
+
+Acceptance rate: 0.455
+ESS: mu=61.1, phi=41.6, sigma_h=8.8
+
+Elapsed time: 51.2 seconds

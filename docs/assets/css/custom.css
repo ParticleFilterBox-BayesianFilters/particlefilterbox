@@ -1,0 +1,199 @@
+/* ==========================================================================
+   particlefilterbox - Custom Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Custom Admonitions
+   -------------------------------------------------------------------------- */
+
+/* Particle admonition - Blue */
+.md-typeset .admonition.particle,
+.md-typeset details.particle {
+  border-color: #2196f3;
+}
+
+.md-typeset .particle > .admonition-title,
+.md-typeset .particle > summary {
+  background-color: rgba(33, 150, 243, 0.1);
+  border-color: #2196f3;
+}
+
+.md-typeset .particle > .admonition-title::before,
+.md-typeset .particle > summary::before {
+  background-color: #2196f3;
+  -webkit-mask-image: var(--md-admonition-icon--info);
+  mask-image: var(--md-admonition-icon--info);
+}
+
+/* Kalman admonition - Green */
+.md-typeset .admonition.kalman,
+.md-typeset details.kalman {
+  border-color: #4caf50;
+}
+
+.md-typeset .kalman > .admonition-title,
+.md-typeset .kalman > summary {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
+}
+
+.md-typeset .kalman > .admonition-title::before,
+.md-typeset .kalman > summary::before {
+  background-color: #4caf50;
+  -webkit-mask-image: var(--md-admonition-icon--tip);
+  mask-image: var(--md-admonition-icon--tip);
+}
+
+/* SMC admonition - Purple */
+.md-typeset .admonition.smc,
+.md-typeset details.smc {
+  border-color: #9c27b0;
+}
+
+.md-typeset .smc > .admonition-title,
+.md-typeset .smc > summary {
+  background-color: rgba(156, 39, 176, 0.1);
+  border-color: #9c27b0;
+}
+
+.md-typeset .smc > .admonition-title::before,
+.md-typeset .smc > summary::before {
+  background-color: #9c27b0;
+  -webkit-mask-image: var(--md-admonition-icon--abstract);
+  mask-image: var(--md-admonition-icon--abstract);
+}
+
+/* PMCMC admonition - Orange */
+.md-typeset .admonition.pmcmc,
+.md-typeset details.pmcmc {
+  border-color: #ff9800;
+}
+
+.md-typeset .pmcmc > .admonition-title,
+.md-typeset .pmcmc > summary {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-color: #ff9800;
+}
+
+.md-typeset .pmcmc > .admonition-title::before,
+.md-typeset .pmcmc > summary::before {
+  background-color: #ff9800;
+  -webkit-mask-image: var(--md-admonition-icon--example);
+  mask-image: var(--md-admonition-icon--example);
+}
+
+/* --------------------------------------------------------------------------
+   Filter Comparison Tables
+   -------------------------------------------------------------------------- */
+
+.md-typeset table.filter-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.85em;
+}
+
+.md-typeset table.filter-comparison th {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  padding: 0.6em 1em;
+  text-align: left;
+  font-weight: 600;
+}
+
+.md-typeset table.filter-comparison td {
+  padding: 0.6em 1em;
+  border-bottom: 1px solid var(--md-typeset-table-color);
+}
+
+.md-typeset table.filter-comparison tbody tr:hover {
+  background-color: var(--md-code-bg-color);
+}
+
+/* --------------------------------------------------------------------------
+   Math Styling
+   -------------------------------------------------------------------------- */
+
+.MathJax {
+  font-size: 1.1em !important;
+}
+
+/* --------------------------------------------------------------------------
+   Typography & Code
+   -------------------------------------------------------------------------- */
+
+.md-typeset code {
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
+}
+
+/* --------------------------------------------------------------------------
+   Navigation
+   -------------------------------------------------------------------------- */
+
+.md-nav__link--active {
+  font-weight: 600;
+}
+
+.md-typeset .headerlink {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.md-typeset :hover > .headerlink {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   API Documentation
+   -------------------------------------------------------------------------- */
+
+.md-typeset .doc-contents {
+  margin-top: 1em;
+}
+
+.md-typeset .field-list dt {
+  font-weight: 600;
+  color: var(--md-primary-fg-color);
+}
+
+.md-typeset .field-list dd {
+  margin-left: 2em;
+  margin-bottom: 0.5em;
+}
+
+/* --------------------------------------------------------------------------
+   Badges
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-block;
+  font-size: 0.75em;
+  padding: 0.25em 0.6em;
+  border-radius: 0.3em;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.badge--primary {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+
+.badge--success {
+  background-color: #4caf50;
+  color: #fff;
+}
+
+.badge--warning {
+  background-color: #ff9800;
+  color: #fff;
+}
+
+/* --------------------------------------------------------------------------
+   Dark Mode Adjustments
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="slate"] .md-typeset table.filter-comparison tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}

@@ -1,0 +1,24 @@
+PGAS Validation Summary (nimbleSMC)
+================================================== 
+
+Configuration:
+  MCMC iterations: 2000 
+  Burn-in: 500 
+  Posterior samples: 2000 
+
+True parameters: mu=-1.0, phi=0.97, sigma_h=0.15, rho=-0.5
+
+Posterior summary:
+       mu               phi            sigma_h             rho         
+ Min.   :-3.0154   Min.   :0.5020   Min.   :0.06368   Min.   :-0.9624  
+ 1st Qu.:-1.4167   1st Qu.:0.6846   1st Qu.:0.10568   1st Qu.:-0.7628  
+ Median :-1.3176   Median :0.7616   Median :0.13925   Median :-0.6548  
+ Mean   :-1.3050   Mean   :0.7712   Mean   :0.15358   Mean   :-0.6123  
+ 3rd Qu.:-1.1520   3rd Qu.:0.8658   3rd Qu.:0.18604   3rd Qu.:-0.5178  
+ Max.   : 0.7613   Max.   :0.9972   Max.   :0.37301   Max.   : 0.1418  
+
+ESS:
+       mu       phi   sigma_h       rho 
+15.239557 13.650693  5.444174  8.789015 
+
+Elapsed time: 0.3 seconds

@@ -43,7 +43,9 @@ cli = [
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
     "pymdown-extensions>=10.0",
+    "mkdocs-autorefs>=0.5",
 ]
 accel = [
     "numba>=0.58",

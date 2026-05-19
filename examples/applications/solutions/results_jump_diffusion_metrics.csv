@@ -1,0 +1,11 @@
+metric,value
+log_likelihood,118.19072557933546
+mean_ess,956.4767621123239
+threshold,0.5
+tp,21.0
+fp,3.0
+fn,33.0
+tn,943.0
+precision,0.875
+recall,0.3888888888888889
+f1,0.5384615384615385

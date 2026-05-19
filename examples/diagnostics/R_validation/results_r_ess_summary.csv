@@ -1,0 +1,2 @@
+"T","N","n_seeds_avg","rbpf_logL","rbpf_logL_ens_mean","rbpf_logL_ens_sd","rbpf_ess_mean","rbpf_ess_min","rbpf_resamples","pomp_logL","pomp_ess_mean","pomp_ess_min","py_logL_bpf","py_ess_mean","corr_rbpf_py_raw","corr_rbpf_py_avg","corr_rbpf_py_smooth","corr_rbpf_py_logL","corr_pomp_py_raw"
+1000,1000,60,-812.420598781475,-812.962074907284,0.334918482003196,724.513793159134,233.15436120977,68,-813.600529649839,948.802019573353,205.587726217784,-812.925031324947,765.257834798304,0.377285009622043,0.46896874743034,0.825348401879324,0.999775360508039,-0.0545940810689241

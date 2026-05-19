@@ -1,0 +1,14 @@
+"model","type","parameter","r_value","py_value","abs_diff","rel_diff","ks_pvalue"
+"Basic SV (SP500)","stochvol_vs_pf","h_mean",0.0179655155880801,NA,4.66418963395369,NA,NA
+"Basic SV (SP500)","filtered_corr","h_mean",0.909168260019959,NA,0.387052132712008,NA,NA
+"Basic SV (SP500)","filtered_corr","vol_mean",0.967630570971809,NA,0.0186797165054765,NA,NA
+"Basic SV (SP500)","parameter","mu",0.0334045474865722,-0.575016310666233,0.608420858152805,1.05809321729999,NA
+"Basic SV (SP500)","parameter","phi",0.83881405962347,0.999451660018699,0.160637600395229,0.160725732740514,NA
+"Basic SV (SP500)","parameter","sigma",0.200085601630738,0.150282789726558,0.0498028119041795,0.331393980606804,NA
+"SV with Leverage (simulated)","stochvol_vs_pf","h_mean",0.579295523365129,NA,0.153615922624311,NA,NA
+"SV with Leverage (simulated)","filtered_corr","h_mean",0.88499830447265,NA,0.24927177480603,NA,NA
+"SV with Leverage (simulated)","filtered_corr","vol_mean",0.881345101084576,NA,0.0708863124810188,NA,NA
+"SV with Leverage (simulated)","parameter","mu",-1.22285603745854,-1.1585428030103,0.0643132344482416,0.0555121781268101,NA
+"SV with Leverage (simulated)","parameter","phi",0.809428812658181,0.9250768591691,0.115648046510919,0.125014527565626,NA
+"SV with Leverage (simulated)","parameter","sigma",0.232570208351152,0.0239364914557803,0.208633716895372,8.71613608371956,NA
+"SV with Leverage (simulated)","parameter","rho",-0.091492106684477,-0.267783684034655,0.176291577350178,0.658335768236587,NA

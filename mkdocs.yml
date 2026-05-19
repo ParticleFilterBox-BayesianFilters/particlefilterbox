@@ -1,77 +1,263 @@
 site_name: particlefilterbox
-site_description: Particle filtering and Sequential Monte Carlo methods in Python
+site_description: "Particle Filters, SMC, and PMCMC for Nonlinear State-Space Models"
+site_author: NodeSEcon
 site_url: https://nodesecon.github.io/particlefilterbox/
-repo_url: https://github.com/nodesecon/particlefilterbox
 repo_name: nodesecon/particlefilterbox
+repo_url: https://github.com/nodesecon/particlefilterbox
+edit_uri: edit/main/docs/
+
+copyright: Copyright &copy; 2024-2026 NodeSEcon
 
 theme:
   name: material
   palette:
-    - scheme: default
-      primary: blue
-      accent: purple
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep purple
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
-      primary: blue
-      accent: purple
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
   features:
+    - navigation.instant
+    - navigation.tracking
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
-    - toc.integrate
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
     - search.suggest
+    - search.highlight
     - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.integrate
   icon:
     repo: fontawesome/brands/github
 
+plugins:
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: numpy
+            show_root_heading: true
+            show_source: true
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            group_by_category: true
+            show_category_heading: true
+            annotations_path: brief
+  - autorefs
+
 markdown_extensions:
-  - pymdownx.highlight:
-      anchor_linenums: true
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
+  - abbr
   - admonition
-  - pymdownx.details
-  - pymdownx.arithmatex:
-      generic: true
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
   - toc:
       permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nodesecon/particlefilterbox
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/particlefilterbox/
+  version:
+    provider: mike
+
+extra_css:
+  - assets/css/custom.css
 
 extra_javascript:
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - assets/js/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 nav:
   - Home: index.md
-  - Getting Started: getting_started.md
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+      - Core Concepts: getting-started/core-concepts.md
+      - Choosing a Filter: getting-started/choosing-filter.md
   - User Guide:
-    - Particle Filters: guide/particle_filters.md
-    - Smoothers: guide/smoothers.md
-    - SMC Methods: guide/smc.md
-    - PMCMC: guide/pmcmc.md
-    - Models: guide/models.md
-    - Visualization: guide/visualization.md
-    - Reports: guide/reports.md
-    - CLI: guide/cli.md
+      - user-guide/index.md
+      - Core Components:
+          - user-guide/core/index.md
+          - ParticleCloud: user-guide/core/particle-cloud.md
+          - Resampling: user-guide/core/resampling.md
+          - ESS: user-guide/core/ess.md
+      - Filters:
+          - user-guide/filters/index.md
+          - Bootstrap PF: user-guide/filters/bootstrap.md
+          - SIR Filter: user-guide/filters/sir.md
+          - Auxiliary PF: user-guide/filters/auxiliary.md
+          - Rao-Blackwellized PF: user-guide/filters/rbpf.md
+          - Unscented PF: user-guide/filters/upf.md
+          - Regularized PF: user-guide/filters/regularized.md
+          - Ensemble PF: user-guide/filters/ensemble.md
+          - Guided PF: user-guide/filters/guided.md
+          - Locally Optimal PF: user-guide/filters/locally-optimal.md
+          - Filter Comparison: user-guide/filters/comparison.md
+      - Smoothers:
+          - user-guide/smoothers/index.md
+          - FFBSm: user-guide/smoothers/ffbsm.md
+          - FFBSi: user-guide/smoothers/ffbsi.md
+          - Two-Filter: user-guide/smoothers/two-filter.md
+          - Fixed-Lag: user-guide/smoothers/fixed-lag.md
+      - SMC Methods:
+          - user-guide/smc/index.md
+          - SMC Sampler: user-guide/smc/smc-sampler.md
+          - "SMC\xB2": user-guide/smc/smc-squared.md
+          - IBIS: user-guide/smc/ibis.md
+          - Waste-Free SMC: user-guide/smc/waste-free.md
+          - SMC Tempering: user-guide/smc/tempering.md
+      - PMCMC:
+          - user-guide/pmcmc/index.md
+          - PMMH: user-guide/pmcmc/pmmh.md
+          - Particle Gibbs: user-guide/pmcmc/particle-gibbs.md
+          - PG-AS: user-guide/pmcmc/pgas.md
+          - Conditional SMC: user-guide/pmcmc/conditional-smc.md
+          - "SMC\xB2 Online": user-guide/pmcmc/smc2-online.md
+          - Tuning Guide: user-guide/pmcmc/tuning.md
+      - Models:
+          - user-guide/models/index.md
+          - Stochastic Volatility: user-guide/models/stochastic-volatility.md
+          - DSGE: user-guide/models/dsge.md
+          - Jump-Diffusion: user-guide/models/jump-diffusion.md
+          - Regime-Switching: user-guide/models/regime.md
+          - Count Data: user-guide/models/count.md
+          - Bounded State-Space: user-guide/models/bounded.md
+          - Mixture Models: user-guide/models/mixture.md
+          - Continuous-Time: user-guide/models/continuous-time.md
+      - Experiment Framework: user-guide/experiment.md
+  - Theory:
+      - theory/index.md
+      - SMC Theory: theory/smc-theory.md
+      - Particle Filter Theory: theory/particle-filter-theory.md
+      - RBPF Theory: theory/rbpf-theory.md
+      - Smoothing Theory: theory/smoothing-theory.md
+      - SMC Sampler Theory: theory/smc-sampler-theory.md
+      - PMCMC Theory: theory/pmcmc-theory.md
+      - Convergence Theory: theory/convergence-theory.md
+      - SV Theory: theory/sv-theory.md
+      - DSGE Theory: theory/dsge-theory.md
+      - References: theory/references.md
+  - Diagnostics:
+      - diagnostics/index.md
+      - ESS Diagnostic: diagnostics/ess-diagnostic.md
+      - Weight Diagnostic: diagnostics/weight-diagnostic.md
+      - Convergence: diagnostics/convergence.md
+      - Degeneracy: diagnostics/degeneracy.md
+      - Filter Comparison: diagnostics/filter-comparison.md
+      - Kalman Validation: diagnostics/kalman-validation.md
+      - MCMC Convergence: diagnostics/mcmc-convergence.md
+      - Acceptance Rate: diagnostics/acceptance-rate.md
+      - Mixing: diagnostics/mixing.md
+      - Predictive Checks: diagnostics/predictive-checks.md
+      - Marginal Likelihood: diagnostics/marginal-likelihood.md
+  - Acceleration:
+      - acceleration/index.md
+      - Numba JIT: acceleration/numba.md
+      - GPU (CuPy/JAX): acceleration/gpu.md
+      - Parallelization: acceleration/parallel.md
+      - Adaptive N: acceleration/adaptive-n.md
+  - Tutorials:
+      - tutorials/index.md
+      - Fundamentals: tutorials/fundamentals.md
+      - Stochastic Volatility: tutorials/stochastic-volatility.md
+      - Auxiliary PF: tutorials/auxiliary-pf.md
+      - RBPF Tutorial: tutorials/rbpf.md
+      - Smoothing: tutorials/smoothing.md
+      - SMC Tutorial: tutorials/smc.md
+      - PMMH Tutorial: tutorials/pmmh.md
+      - PG-AS Tutorial: tutorials/pgas.md
+      - DSGE Tutorial: tutorials/dsge.md
+      - Acceleration: tutorials/acceleration.md
+      - Complete Workflow: tutorials/complete-workflow.md
+  - Visualization:
+      - visualization/index.md
+      - Particle Plots: visualization/particle-plots.md
+      - Weight Plots: visualization/weight-plots.md
+      - State Plots: visualization/state-plots.md
+      - PMCMC Plots: visualization/pmcmc-plots.md
+      - Model Plots: visualization/model-plots.md
+      - Convergence Plots: visualization/convergence-plots.md
+      - Themes: visualization/themes.md
   - API Reference:
-    - Core: api/core.md
-    - Filters: api/filters.md
-    - Smoothers: api/smoothers.md
-    - SMC: api/smc.md
-    - PMCMC: api/pmcmc.md
-    - Models: api/models.md
-    - Visualization: api/visualization.md
-    - Reports: api/reports.md
-    - Datasets: api/datasets.md
-  - Examples:
-    - Stochastic Volatility: examples/sv.md
-    - Linear Gaussian: examples/linear_gaussian.md
-  - Changelog: changelog.md
-
-plugins:
-  - search
+      - api/index.md
+      - Core: api/core.md
+      - Resampling: api/resampling.md
+      - Filters: api/filters.md
+      - Smoothers: api/smoothers.md
+      - SMC: api/smc.md
+      - PMCMC: api/pmcmc.md
+      - Models: api/models.md
+      - Diagnostics: api/diagnostics.md
+      - Acceleration: api/acceleration.md
+      - Visualization: api/visualization.md
+      - Reports: api/reports.md
+      - Experiment: api/experiment.md
+      - Datasets: api/datasets.md
+      - CLI: api/cli.md
+  - FAQ:
+      - faq/general.md
+      - Advanced: faq/advanced.md
+      - Troubleshooting: faq/troubleshooting.md
+  - Benchmarks:
+      - benchmarks/index.md
+      - Filters: benchmarks/filters.md
+      - Acceleration: benchmarks/acceleration.md
+      - PMCMC: benchmarks/pmcmc.md
+      - Library Comparison: benchmarks/comparison.md
+  - Contributing:
+      - contributing/contributing.md
+      - Code of Conduct: contributing/code-of-conduct.md
+      - Changelog: contributing/changelog.md
+      - Roadmap: contributing/roadmap.md
