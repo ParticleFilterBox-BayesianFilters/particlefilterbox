@@ -6,9 +6,10 @@ State: (x_t, s_t) where s_t is a discrete Markov regime.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class NonlinearRegime:

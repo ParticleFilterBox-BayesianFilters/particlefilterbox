@@ -1,11 +1,11 @@
 """Estimate command for particlefilterbox CLI.
 
-Estimates model parameters using PMCMC methods.
+Estimates model parameters using Particle Marginal Metropolis-Hastings (PMMH).
 
 Usage
 -----
-    $ pfbox estimate data.csv --model sv --method pmmh --n-iterations 5000
-    $ pfbox estimate data.csv --model sv --n-particles 500 --n-iterations 10000
+    $ pfbox estimate data.csv --model sv --n-particles 200 --n-iterations 5000
+    $ pfbox estimate data.csv --model sv --output chains.csv
 """
 
 from __future__ import annotations
@@ -17,6 +17,11 @@ from typing import Any
 import typer
 
 from particlefilterbox._logging import get_logger
+from particlefilterbox.cli._models import (
+    SUPPORTED_ESTIMATORS,
+    SUPPORTED_MODELS,
+    build_pmmh,
+)
 
 logger = get_logger("cli.estimate")
 
@@ -32,12 +37,12 @@ def estimate_command(
         "sv",
         "--model",
         "-m",
-        help="Model name: sv, local_level, dsge.",
+        help=f"Model name. Supported: {', '.join(SUPPORTED_MODELS)}.",
     ),
     method: str = typer.Option(
         "pmmh",
         "--method",
-        help="Estimation method: pmmh, particle_gibbs, smc2.",
+        help=f"Estimation method. Supported: {', '.join(SUPPORTED_ESTIMATORS)}.",
     ),
     n_particles: int = typer.Option(
         500,
@@ -57,7 +62,7 @@ def estimate_command(
         None,
         "--output",
         "-o",
-        help="Output file path for results.",
+        help="Output file path for the posterior chains (.json or .csv).",
     ),
     plot: bool = typer.Option(
         False,
@@ -72,170 +77,135 @@ def estimate_command(
         help="Random seed.",
     ),
 ) -> None:
-    """Estimate model parameters using PMCMC.
+    """Estimate model parameters using PMCMC (PMMH).
 
-    Loads data, configures PMCMC estimation, runs the specified number
-    of iterations, and reports posterior summaries.
+    Loads data from CSV, builds the model adapter and prior, runs the PMMH
+    sampler, and prints a posterior summary (per-parameter mean and std after
+    burn-in, plus the acceptance rate). Optionally saves the chains.
     """
     import numpy as np
     import pandas as pd
 
+    if method not in SUPPORTED_ESTIMATORS:
+        typer.echo(
+            f"Unknown method '{method}'. Supported methods: "
+            f"{', '.join(SUPPORTED_ESTIMATORS)}.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
     typer.echo(f"Loading data from {data}...")
-    df = pd.read_csv(data)
-    observations = df.values
+    try:
+        df = pd.read_csv(data)
+        observations = df.values.astype(float)
+    except Exception as e:  # noqa: BLE001
+        typer.echo(f"Error loading data: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
     typer.echo(f"Model: {model}")
     typer.echo(f"Method: {method}")
     typer.echo(f"Particles: {n_particles}")
     typer.echo(f"Iterations: {n_iterations}")
 
-    rng = np.random.default_rng(seed)
-
-    typer.echo("Running parameter estimation...")
-    typer.echo("(This may take a while...)")
-
-    # Build and run estimator
+    # Build the PMMH sampler and run.
     try:
-        estimator = _get_estimator(
-            method=method,
+        pmmh, adapter, _prior = build_pmmh(
             model_name=model,
             n_particles=n_particles,
             n_iterations=n_iterations,
-            rng=rng,
+            seed=seed,
         )
-        results = estimator.run(observations)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
+        typer.echo(f"Error configuring estimator: {e}", err=True)
+        raise typer.Exit(code=1) from e
+
+    typer.echo("Running PMMH...")
+    try:
+        results = pmmh.run(observations)
+    except Exception as e:  # noqa: BLE001
         typer.echo(f"Error during estimation: {e}", err=True)
-        raise typer.Exit(code=1) from None
+        raise typer.Exit(code=1) from e
 
-    # Report posterior summary
-    chain = getattr(results, "chain", None)
-    param_names = getattr(results, "param_names", None)
+    # Report posterior summary.
+    param_names = results.param_names or adapter.param_names
+    means = results.posterior_mean()
+    stds = results.posterior_std()
+    accept_rate = results.acceptance_rate()
 
-    if chain is not None:
-        chain_arr = np.asarray(chain)
-        burn_in = chain_arr.shape[0] // 4
-        post = chain_arr[burn_in:]
+    typer.echo("")
+    typer.echo("Posterior summary (post burn-in):")
+    typer.echo(f"  {'parameter':<12}{'mean':>14}{'std':>14}")
+    for name, mean, std in zip(
+        param_names, np.atleast_1d(means), np.atleast_1d(stds), strict=True
+    ):
+        typer.echo(f"  {name:<12}{float(mean):>14.6f}{float(std):>14.6f}")
+    typer.echo(f"Acceptance rate: {accept_rate:.4f}")
+    typer.echo(f"Burn-in: {results.burnin}")
+    typer.echo(f"Effective samples: {results.n_effective_samples}")
 
-        if param_names is None:
-            param_names = [f"param_{i}" for i in range(post.shape[1])]
-
-        typer.echo("\nPosterior Summary (after 25% burn-in):")
-        typer.echo(f"{'Parameter':<15} {'Mean':>10} {'Std':>10} {'2.5%':>10} {'97.5%':>10}")
-        typer.echo("-" * 55)
-        for j, name in enumerate(param_names):
-            samples = post[:, j]
-            typer.echo(
-                f"{name:<15} {np.mean(samples):>10.4f} {np.std(samples):>10.4f} "
-                f"{np.percentile(samples, 2.5):>10.4f} "
-                f"{np.percentile(samples, 97.5):>10.4f}"
-            )
-
-    acceptance_rate = getattr(results, "acceptance_rate", None)
-    if acceptance_rate is not None:
-        typer.echo(f"\nAcceptance rate: {acceptance_rate:.4f}")
-
-    # Save output
+    # Save output.
     if output is not None:
-        _save_estimation_results(results, output)
-        typer.echo(f"Results saved to {output}")
+        try:
+            _save_results(results, output)
+            typer.echo(f"Results saved to {output}")
+        except Exception as e:  # noqa: BLE001
+            typer.echo(f"Error saving output: {e}", err=True)
+            raise typer.Exit(code=1) from e
 
-    # Generate plots
+    # Generate plots.
     if plot:
-        _generate_estimation_plots(results)
+        _generate_estimate_plots(results)
 
     typer.echo("Done.")
 
 
-def _get_estimator(
-    method: str,
-    model_name: str,
-    n_particles: int,
-    n_iterations: int,
-    rng: Any,
-) -> Any:
-    """Get PMCMC estimator by method name."""
-    try:
-        if method == "pmmh":
-            from particlefilterbox.pmcmc.pmmh import PMMH
-
-            model = _get_model_for_estimation(model_name)
-            return PMMH(
-                model=model,
-                n_particles=n_particles,
-                n_iterations=n_iterations,
-                rng=rng,
-            )
-        else:
-            typer.echo(f"Unknown method: {method}. Using PMMH.", err=True)
-            from particlefilterbox.pmcmc.pmmh import PMMH
-
-            model = _get_model_for_estimation(model_name)
-            return PMMH(
-                model=model,
-                n_particles=n_particles,
-                n_iterations=n_iterations,
-                rng=rng,
-            )
-    except ImportError as e:
-        typer.echo(f"Error importing estimator: {e}", err=True)
-        raise typer.Exit(code=1) from None
-
-
-def _get_model_for_estimation(name: str) -> Any:
-    """Get model instance for estimation."""
-    try:
-        if name == "sv":
-            from particlefilterbox.models.sv import SVModel
-
-            return SVModel()
-        else:
-            typer.echo(f"Unknown model: {name}. Using SV.", err=True)
-            from particlefilterbox.models.sv import SVModel
-
-            return SVModel()
-    except ImportError as e:
-        typer.echo(f"Error importing model: {e}", err=True)
-        raise typer.Exit(code=1) from None
-
-
-def _save_estimation_results(results: Any, path: Path) -> None:
-    """Save estimation results."""
+def _save_results(results: Any, path: Path) -> None:
+    """Save posterior chains to file (.json or .csv)."""
     import numpy as np
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    param_names = results.param_names
+    chains = np.asarray(results.chains)
+
     if path.suffix == ".json":
-        output_dict: dict[str, Any] = {}
-        chain = getattr(results, "chain", None)
-        if chain is not None:
-            output_dict["chain_shape"] = list(np.asarray(chain).shape)
-        param_names = getattr(results, "param_names", None)
-        if param_names is not None:
-            output_dict["param_names"] = list(param_names)
-        acceptance_rate = getattr(results, "acceptance_rate", None)
-        if acceptance_rate is not None:
-            output_dict["acceptance_rate"] = float(acceptance_rate)
+        means = np.atleast_1d(results.posterior_mean())
+        stds = np.atleast_1d(results.posterior_std())
+        output_dict: dict[str, Any] = {
+            "param_names": list(param_names),
+            "posterior_mean": [float(m) for m in means],
+            "posterior_std": [float(s) for s in stds],
+            "acceptance_rate": float(results.acceptance_rate()),
+            "burnin": int(results.burnin),
+            "thin": int(results.thin),
+            "n_iterations": int(results.n_iterations),
+            "chains": chains.tolist(),
+        }
         path.write_text(json.dumps(output_dict, indent=2))
+    elif path.suffix == ".csv":
+        results.to_dataframe().to_csv(path, index=False)
     else:
-        typer.echo(f"Unsupported format: {path.suffix}. Using JSON.", err=True)
+        msg = f"Unsupported output format: {path.suffix}. Use .json or .csv."
+        raise ValueError(msg)
 
 
-def _generate_estimation_plots(results: Any) -> None:
-    """Generate estimation diagnostic plots."""
+def _generate_estimate_plots(results: Any) -> None:
+    """Generate trace plots for the posterior chains."""
     try:
         import matplotlib.pyplot as plt
+        import numpy as np
 
-        from particlefilterbox.visualization import plot_posterior, plot_trace, set_theme
-
-        set_theme("nodesecon")
-
-        param_names = getattr(results, "param_names", None)
-        if param_names:
-            for name in param_names:
-                fig, ax = plot_trace(results, param=name)
-                plt.show()
-                fig, ax = plot_posterior(results, param=name)
-                plt.show()
+        param_names = results.param_names
+        chains = np.asarray(results.chains)
+        k = chains.shape[1] if chains.ndim > 1 else 1
+        fig, axes = plt.subplots(k, 1, figsize=(8, 2.5 * k), squeeze=False)
+        for j in range(k):
+            col = chains[:, j] if chains.ndim > 1 else chains
+            axes[j, 0].plot(col, lw=0.7)
+            axes[j, 0].set_ylabel(param_names[j])
+        axes[-1, 0].set_xlabel("iteration")
+        fig.suptitle("PMMH trace plots")
+        plt.tight_layout()
+        plt.show()
     except ImportError:
         typer.echo("matplotlib not installed. Skipping plots.", err=True)

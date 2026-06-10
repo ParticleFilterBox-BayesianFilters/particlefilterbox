@@ -164,10 +164,20 @@ class LocallyOptimalPF(BaseParticleFilter):
         n_particles = particles.shape[0]
 
         if hasattr(self.model, "predictive_log_likelihood"):
-            log_pred = np.empty(n_particles, dtype=np.float64)
-            for i in range(n_particles):
-                log_pred[i] = self.model.predictive_log_likelihood(  # type: ignore[attr-defined]
-                    observation, particles[i : i + 1], t
+            # The model's predictive_log_likelihood is vectorized over particles:
+            # it accepts ancestor particles of shape (N, k_states) and returns
+            # log p(y_t | x_{t-1}^(i)) of shape (N,). Call it once on the full
+            # batch rather than looping particle-by-particle.
+            log_pred = np.asarray(
+                self.model.predictive_log_likelihood(  # type: ignore[attr-defined]
+                    observation, particles, t
+                ),
+                dtype=np.float64,
+            ).reshape(-1)
+            if log_pred.shape[0] != n_particles:
+                raise ValueError(
+                    "predictive_log_likelihood returned shape "
+                    f"{log_pred.shape}, expected ({n_particles},)"
                 )
             return log_pred
 

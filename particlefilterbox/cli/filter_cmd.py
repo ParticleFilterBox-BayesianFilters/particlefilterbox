@@ -17,6 +17,12 @@ from typing import Any
 import typer
 
 from particlefilterbox._logging import get_logger
+from particlefilterbox.cli._models import (
+    SUPPORTED_METHODS,
+    SUPPORTED_MODELS,
+    build_filter,
+    build_filter_model,
+)
 
 logger = get_logger("cli.filter")
 
@@ -32,7 +38,7 @@ def filter_command(
         "sv",
         "--model",
         "-m",
-        help="Model name: sv, local_level, linear_gaussian, dsge.",
+        help=f"Model name. Supported: {', '.join(SUPPORTED_MODELS)}.",
     ),
     n_particles: int = typer.Option(
         1000,
@@ -44,7 +50,7 @@ def filter_command(
     method: str = typer.Option(
         "bootstrap",
         "--method",
-        help="Filter method: bootstrap, apf, ekpf, ukpf.",
+        help=f"Filter method. Supported: {', '.join(SUPPORTED_METHODS)}.",
     ),
     output: Path | None = typer.Option(
         None,
@@ -74,93 +80,55 @@ def filter_command(
     import pandas as pd
 
     typer.echo(f"Loading data from {data}...")
-    df = pd.read_csv(data)
-    observations = df.values
+    try:
+        df = pd.read_csv(data)
+        observations = df.values.astype(float)
+    except Exception as e:  # noqa: BLE001
+        typer.echo(f"Error loading data: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
     typer.echo(f"Model: {model}")
     typer.echo(f"Method: {method}")
     typer.echo(f"Particles: {n_particles}")
 
-    rng = np.random.default_rng(seed)
+    # Configure model + filter and run.
+    try:
+        model_instance = build_filter_model(model)
+        filter_instance = build_filter(method, model_instance, n_particles, seed)
+        typer.echo("Running particle filter...")
+        results = filter_instance.filter(observations)
+    except Exception as e:  # noqa: BLE001
+        typer.echo(f"Error during filtering: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
-    # Configure model
-    model_instance = _get_model(model)
-    filter_instance = _get_filter(method, model_instance, n_particles, rng)
-
-    typer.echo("Running particle filter...")
-    results = filter_instance.filter(observations)
-
-    # Report summary
+    # Report summary.
     log_likelihood = getattr(results, "log_likelihood", None)
     if log_likelihood is not None:
         typer.echo(f"Log-likelihood: {log_likelihood:.4f}")
 
-    ess = getattr(results, "ess", None)
-    if ess is not None:
-        ess_arr = np.asarray(ess)
+    ess_history = getattr(results, "ess_history", None)
+    if ess_history is not None:
+        ess_arr = np.asarray(ess_history)
         typer.echo(f"Mean ESS: {ess_arr.mean():.1f}")
 
-    # Save output
-    if output is not None:
-        _save_results(results, output)
-        typer.echo(f"Results saved to {output}")
+    n_resampled = getattr(results, "resampled", None)
+    if n_resampled is not None:
+        typer.echo(f"Resampling steps: {int(np.sum(n_resampled))}")
 
-    # Generate plots
+    # Save output.
+    if output is not None:
+        try:
+            _save_results(results, output)
+            typer.echo(f"Results saved to {output}")
+        except Exception as e:  # noqa: BLE001
+            typer.echo(f"Error saving output: {e}", err=True)
+            raise typer.Exit(code=1) from e
+
+    # Generate plots.
     if plot:
         _generate_filter_plots(results, model)
 
     typer.echo("Done.")
-
-
-def _get_model(name: str) -> Any:
-    """Get model instance by name."""
-    try:
-        if name == "sv":
-            from particlefilterbox.models.sv import SVModel
-
-            return SVModel()
-        elif name == "local_level":
-            from particlefilterbox.models.local_level import LocalLevelModel
-
-            return LocalLevelModel()
-        elif name == "linear_gaussian":
-            from particlefilterbox.models.linear_gaussian import LinearGaussianModel
-
-            return LinearGaussianModel()
-        else:
-            typer.echo(f"Unknown model: {name}. Using default SV model.", err=True)
-            from particlefilterbox.models.sv import SVModel
-
-            return SVModel()
-    except ImportError as e:
-        typer.echo(f"Error importing model '{name}': {e}", err=True)
-        raise typer.Exit(code=1) from None
-
-
-def _get_filter(
-    method: str,
-    model: Any,
-    n_particles: int,
-    rng: Any,
-) -> Any:
-    """Get filter instance by method name."""
-    try:
-        if method == "bootstrap":
-            from particlefilterbox.filters.bootstrap import BootstrapFilter
-
-            return BootstrapFilter(model=model, n_particles=n_particles, rng=rng)
-        elif method == "apf":
-            from particlefilterbox.filters.apf import AuxiliaryParticleFilter
-
-            return AuxiliaryParticleFilter(model=model, n_particles=n_particles, rng=rng)
-        else:
-            typer.echo(f"Unknown method: {method}. Using bootstrap.", err=True)
-            from particlefilterbox.filters.bootstrap import BootstrapFilter
-
-            return BootstrapFilter(model=model, n_particles=n_particles, rng=rng)
-    except ImportError as e:
-        typer.echo(f"Error importing filter '{method}': {e}", err=True)
-        raise typer.Exit(code=1) from None
 
 
 def _save_results(results: Any, path: Path) -> None:
@@ -169,27 +137,29 @@ def _save_results(results: Any, path: Path) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    filtered_means = getattr(results, "filtered_means", None)
+
     if path.suffix == ".json":
         output_dict: dict[str, Any] = {}
         log_likelihood = getattr(results, "log_likelihood", None)
         if log_likelihood is not None:
             output_dict["log_likelihood"] = float(log_likelihood)
-        ess = getattr(results, "ess", None)
-        if ess is not None:
-            output_dict["ess"] = [float(e) for e in np.asarray(ess)]
-        filtered_mean = getattr(results, "filtered_mean", None)
-        if filtered_mean is not None:
-            output_dict["filtered_mean"] = np.asarray(filtered_mean).tolist()
+        ess_history = getattr(results, "ess_history", None)
+        if ess_history is not None:
+            output_dict["ess_history"] = [float(e) for e in np.asarray(ess_history)]
+        if filtered_means is not None:
+            output_dict["filtered_means"] = np.asarray(filtered_means).tolist()
         path.write_text(json.dumps(output_dict, indent=2))
     elif path.suffix == ".csv":
         import pandas as pd
 
-        filtered_mean = getattr(results, "filtered_mean", None)
-        if filtered_mean is not None:
-            df = pd.DataFrame(np.asarray(filtered_mean))
+        if filtered_means is not None:
+            df = pd.DataFrame(np.asarray(filtered_means))
+            df.columns = [f"state_{i}" for i in range(df.shape[1])]
             df.to_csv(path, index=False)
     else:
-        typer.echo(f"Unsupported output format: {path.suffix}", err=True)
+        msg = f"Unsupported output format: {path.suffix}. Use .json or .csv."
+        raise ValueError(msg)
 
 
 def _generate_filter_plots(results: Any, model_name: str) -> None:
@@ -204,10 +174,10 @@ def _generate_filter_plots(results: Any, model_name: str) -> None:
         )
 
         set_theme("nodesecon")
-        fig, ax = plot_filtered_state(results)
+        plot_filtered_state(results)
         plt.show()
 
-        fig, ax = plot_ess_timeline(results)
+        plot_ess_timeline(results)
         plt.show()
     except ImportError:
         typer.echo("matplotlib not installed. Skipping plots.", err=True)

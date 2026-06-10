@@ -15,9 +15,10 @@ References:
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class DSGE:
@@ -104,7 +105,7 @@ class DSGE:
         Z: NDArray[np.float64] | None = None,
         H: NDArray[np.float64] | None = None,
         **kwargs: Any,
-    ) -> "DSGE":
+    ) -> DSGE:
         """Create DSGE model from system matrices.
 
         Parameters
@@ -266,10 +267,7 @@ class DSGE:
 
         # Measurement error
         if self.H is not None:
-            if self.H.ndim == 1:
-                obs_std = self.H
-            else:
-                obs_std = np.sqrt(np.diag(self.H @ self.H.T))
+            obs_std = self.H if self.H.ndim == 1 else np.sqrt(np.diag(self.H @ self.H.T))
         else:
             obs_std = np.full(self.k_obs, 0.1)
 

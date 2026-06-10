@@ -100,6 +100,8 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "particlefilterbox/cli/*.py" = ["B008"]
+# Models use standard mathematical notation (T horizon, K factors, identity I, etc.)
+"particlefilterbox/models/*.py" = ["N803", "N806", "E741"]
 "tests/integration/*.py" = ["N803", "N806"]
 "tests/validation/*.py" = ["N803", "N806"]
 "tests/benchmarks/*.py" = ["N803", "N806"]

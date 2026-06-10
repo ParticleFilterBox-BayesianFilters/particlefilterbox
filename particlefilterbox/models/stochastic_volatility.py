@@ -10,9 +10,10 @@ Variants:
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class StochasticVolatility:
@@ -217,13 +218,21 @@ class StochasticVolatility:
         sigma = self.params["sigma"]
         n = state.shape[0]
 
-        if self.variant == "basic":
-            h = state[:, 0]
-            eta = rng.standard_normal(n)
-            h_next = mu + phi * (h - mu) + sigma * eta
-            return h_next.reshape(-1, 1)
-
-        elif self.variant == "leverage":
+        # NOTE on the 'leverage' variant (Omori et al. 2007):
+        # The leverage effect couples the volatility innovation eta_t with the
+        # CONTEMPORANEOUS return innovation eps_t via the correlation rho, i.e.
+        #     eta_t = rho * eps_t + sqrt(1 - rho^2) * z_t,   y_t = exp(h_t/2)*eps_t
+        # (see simulate() for the data-generating process). The prior transition
+        # p(x_t | x_{t-1}) used by a bootstrap particle filter samples eta_t
+        # BEFORE y_t is available, so it cannot represent this coupling without
+        # conditioning on y_t. We therefore deliberately propagate the 'leverage'
+        # state with the same marginal prior dynamics as 'basic' (rho is integrated
+        # out, giving eta_t ~ N(0, 1) marginally). The rho correlation is exercised
+        # in simulate() (data generation); fully exploiting leverage at inference
+        # time would require a non-bootstrap proposal q(x_t | x_{t-1}, y_t) or a
+        # mixture-sampler likelihood as in Omori et al. (2007), which this prior
+        # transition intentionally does not implement.
+        if self.variant in ("basic", "leverage"):
             h = state[:, 0]
             eta = rng.standard_normal(n)
             h_next = mu + phi * (h - mu) + sigma * eta

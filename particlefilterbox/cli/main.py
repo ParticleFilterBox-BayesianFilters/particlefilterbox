@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import typer
 
+from particlefilterbox import __version__
 from particlefilterbox.cli.compare_cmd import compare_command
 from particlefilterbox.cli.estimate_cmd import estimate_command
 from particlefilterbox.cli.filter_cmd import filter_command
@@ -28,7 +29,7 @@ app = typer.Typer(
 def version_callback(value: bool) -> None:
     """Print version and exit."""
     if value:
-        typer.echo("particlefilterbox 0.1.0")
+        typer.echo(f"particlefilterbox {__version__}")
         raise typer.Exit()
 
 

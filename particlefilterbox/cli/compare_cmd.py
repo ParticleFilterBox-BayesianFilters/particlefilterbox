@@ -4,18 +4,22 @@ Compares multiple models on the same dataset using log-evidence.
 
 Usage
 -----
-    $ pfbox compare data.csv --models sv,local_level --n-particles 2000
+    $ pfbox compare data.csv --models sv --n-particles 2000
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import typer
 
 from particlefilterbox._logging import get_logger
+from particlefilterbox.cli._models import (
+    SUPPORTED_MODELS,
+    build_filter,
+    build_filter_model,
+)
 
 logger = get_logger("cli.compare")
 
@@ -28,10 +32,18 @@ def compare_command(
         readable=True,
     ),
     models: str = typer.Option(
-        "sv,local_level",
+        "sv",
         "--models",
         "-m",
-        help="Comma-separated model names to compare.",
+        help=(
+            "Comma-separated model names to compare. "
+            f"Supported: {', '.join(SUPPORTED_MODELS)}."
+        ),
+    ),
+    method: str = typer.Option(
+        "bootstrap",
+        "--method",
+        help="Filter method used for every model.",
     ),
     n_particles: int = typer.Option(
         1000,
@@ -68,10 +80,14 @@ def compare_command(
     import pandas as pd
 
     typer.echo(f"Loading data from {data}...")
-    df = pd.read_csv(data)
-    observations = df.values
+    try:
+        df = pd.read_csv(data)
+        observations = df.values.astype(float)
+    except Exception as e:  # noqa: BLE001
+        typer.echo(f"Error loading data: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
-    model_names = [m.strip() for m in models.split(",")]
+    model_names = [m.strip() for m in models.split(",") if m.strip()]
     typer.echo(f"Comparing models: {', '.join(model_names)}")
     typer.echo(f"Particles: {n_particles}, Runs: {n_runs}")
 
@@ -83,19 +99,14 @@ def compare_command(
 
         for run in range(n_runs):
             try:
-                model_instance = _get_model(model_name)
-                from particlefilterbox.filters.bootstrap import BootstrapFilter
-
-                pf = BootstrapFilter(
-                    model=model_instance,
-                    n_particles=n_particles,
-                    rng=np.random.default_rng(seed + run if seed is not None else None),
-                )
+                model_instance = build_filter_model(model_name)
+                run_seed = seed + run if seed is not None else None
+                pf = build_filter(method, model_instance, n_particles, run_seed)
                 result = pf.filter(observations)
                 ll = getattr(result, "log_likelihood", None)
                 if ll is not None:
                     log_likes.append(float(ll))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 typer.echo(f"  Run {run + 1} failed: {e}", err=True)
 
         if log_likes:
@@ -104,57 +115,45 @@ def compare_command(
                 "std_loglike": float(np.std(log_likes)),
                 "n_runs": len(log_likes),
             }
-            typer.echo(f"  Log-likelihood: {np.mean(log_likes):.4f} (+/- {np.std(log_likes):.4f})")
+            typer.echo(
+                f"  Log-likelihood: {np.mean(log_likes):.4f} "
+                f"(+/- {np.std(log_likes):.4f})"
+            )
         else:
             typer.echo(f"  No successful runs for {model_name}", err=True)
 
-    # Print comparison table
-    if results_dict:
-        typer.echo("\n" + "=" * 60)
-        typer.echo("Model Comparison")
-        typer.echo("=" * 60)
-        typer.echo(f"{'Model':<20} {'Mean LL':>12} {'Std LL':>12} {'Runs':>6}")
-        typer.echo("-" * 50)
+    # If nothing succeeded, this is a genuine failure.
+    if not results_dict:
+        typer.echo("No models produced results.", err=True)
+        raise typer.Exit(code=1)
 
-        sorted_models = sorted(
-            results_dict.items(),
-            key=lambda x: x[1]["mean_loglike"],
-            reverse=True,
+    # Print comparison table.
+    typer.echo("\n" + "=" * 60)
+    typer.echo("Model Comparison")
+    typer.echo("=" * 60)
+    typer.echo(f"{'Model':<20} {'Mean LL':>12} {'Std LL':>12} {'Runs':>6}")
+    typer.echo("-" * 50)
+
+    sorted_models = sorted(
+        results_dict.items(),
+        key=lambda x: x[1]["mean_loglike"],
+        reverse=True,
+    )
+    for model_name, stats in sorted_models:
+        typer.echo(
+            f"{model_name:<20} {stats['mean_loglike']:>12.4f} "
+            f"{stats['std_loglike']:>12.4f} {int(stats['n_runs']):>6}"
         )
-        for model_name, stats in sorted_models:
-            typer.echo(
-                f"{model_name:<20} {stats['mean_loglike']:>12.4f} "
-                f"{stats['std_loglike']:>12.4f} {stats['n_runs']:>6}"
-            )
-        typer.echo("=" * 60)
+    typer.echo("=" * 60)
 
-    # Save output
+    # Save output.
     if output is not None:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(results_dict, indent=2))
-        typer.echo(f"\nResults saved to {output}")
+        try:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(results_dict, indent=2))
+            typer.echo(f"\nResults saved to {output}")
+        except Exception as e:  # noqa: BLE001
+            typer.echo(f"Error saving output: {e}", err=True)
+            raise typer.Exit(code=1) from e
 
     typer.echo("Done.")
-
-
-def _get_model(name: str) -> Any:
-    """Get model instance by name."""
-    try:
-        if name == "sv":
-            from particlefilterbox.models.sv import SVModel
-
-            return SVModel()
-        elif name == "local_level":
-            from particlefilterbox.models.local_level import LocalLevelModel
-
-            return LocalLevelModel()
-        elif name == "linear_gaussian":
-            from particlefilterbox.models.linear_gaussian import LinearGaussianModel
-
-            return LinearGaussianModel()
-        else:
-            msg = f"Unknown model: {name}"
-            raise ValueError(msg)
-    except ImportError as e:
-        typer.echo(f"Error importing model '{name}': {e}", err=True)
-        raise typer.Exit(code=1) from None

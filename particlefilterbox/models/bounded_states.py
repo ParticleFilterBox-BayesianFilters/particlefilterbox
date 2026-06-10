@@ -9,9 +9,10 @@ Handles physical constraints like:
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class BoundedStates:

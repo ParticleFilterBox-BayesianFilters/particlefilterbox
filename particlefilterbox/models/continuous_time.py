@@ -9,9 +9,10 @@ Variants:
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class ContinuousTime:
@@ -57,9 +58,7 @@ class ContinuousTime:
         self.params = params if params is not None else self._default_params()
 
     def _get_param_names(self) -> list[str]:
-        if self.variant == "cir":
-            return ["kappa", "theta", "sigma"]
-        elif self.variant == "vasicek":
+        if self.variant == "cir" or self.variant == "vasicek":
             return ["kappa", "theta", "sigma"]
         elif self.variant == "heston":
             return ["mu", "kappa", "theta", "sigma_v", "rho"]

@@ -326,7 +326,10 @@ class TestAllFiltersImportable:
 
         assert BaseParticleFilter is not None
         assert BootstrapPF is not None
-        assert SIR is BootstrapPF
+        # SIR is a genuine separate implementation (general proposal support
+        # with importance correction), not a thin alias of BootstrapPF.
+        assert SIR is not None
+        assert issubclass(SIR, BaseParticleFilter)
         assert AuxiliaryPF is not None
         assert LocallyOptimalPF is not None
         assert RegularizedPF is not None

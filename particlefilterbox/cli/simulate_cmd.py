@@ -17,6 +17,7 @@ from typing import Any
 import typer
 
 from particlefilterbox._logging import get_logger
+from particlefilterbox.cli._models import SUPPORTED_MODELS, build_model
 
 logger = get_logger("cli.simulate")
 
@@ -26,7 +27,7 @@ def simulate_command(
         "sv",
         "--model",
         "-m",
-        help="Model name: sv, local_level, linear_gaussian.",
+        help=f"Model name. Supported: {', '.join(SUPPORTED_MODELS)}.",
     ),
     n_obs: int = typer.Option(
         500,
@@ -69,8 +70,6 @@ def simulate_command(
     typer.echo(f"Simulating from model: {model}")
     typer.echo(f"Observations: {n_obs}")
 
-    rng = np.random.default_rng(seed)
-
     # Parse parameters
     param_dict: dict[str, float] = {}
     if params is not None:
@@ -81,13 +80,13 @@ def simulate_command(
             typer.echo(f"Invalid JSON parameters: {e}", err=True)
             raise typer.Exit(code=1) from None
 
-    # Simulate
+    # Build model and simulate.
     try:
-        model_instance = _get_model(model, param_dict)
-        states, observations = _simulate(model_instance, n_obs, rng)
-    except Exception as e:
+        model_instance = build_model(model, param_dict)
+        states, observations = _simulate(model_instance, n_obs, seed)
+    except Exception as e:  # noqa: BLE001 - surface any failure to the user
         typer.echo(f"Error during simulation: {e}", err=True)
-        raise typer.Exit(code=1) from None
+        raise typer.Exit(code=1) from e
 
     typer.echo(f"Simulated {n_obs} observations")
     typer.echo(f"States shape: {states.shape}")
@@ -99,14 +98,18 @@ def simulate_command(
 
     # Save output
     if output is not None:
-        import pandas as pd
+        try:
+            import pandas as pd
 
-        output.parent.mkdir(parents=True, exist_ok=True)
-        df = pd.DataFrame(observations)
-        n_cols = observations.shape[1] if observations.ndim > 1 else 1
-        df.columns = [f"y_{i}" for i in range(n_cols)]
-        df.to_csv(output, index=False)
-        typer.echo(f"Data saved to {output}")
+            output.parent.mkdir(parents=True, exist_ok=True)
+            obs2d = observations if observations.ndim > 1 else observations.reshape(-1, 1)
+            df = pd.DataFrame(obs2d)
+            df.columns = [f"y_{i}" for i in range(obs2d.shape[1])]
+            df.to_csv(output, index=False)
+            typer.echo(f"Data saved to {output}")
+        except Exception as e:  # noqa: BLE001
+            typer.echo(f"Error saving output: {e}", err=True)
+            raise typer.Exit(code=1) from e
 
     # Plot
     if plot:
@@ -135,58 +138,14 @@ def simulate_command(
     typer.echo("Done.")
 
 
-def _get_model(name: str, params: dict[str, float]) -> Any:
-    """Get model instance with optional parameters."""
-    try:
-        if name == "sv":
-            from particlefilterbox.models.sv import SVModel
+def _simulate(model: Any, n_obs: int, seed: int | None) -> tuple[Any, Any]:
+    """Simulate ``(states, observations)`` from a model.
 
-            return SVModel(**params) if params else SVModel()
-        elif name == "local_level":
-            from particlefilterbox.models.local_level import LocalLevelModel
-
-            return LocalLevelModel(**params) if params else LocalLevelModel()
-        elif name == "linear_gaussian":
-            from particlefilterbox.models.linear_gaussian import LinearGaussianModel
-
-            return LinearGaussianModel(**params) if params else LinearGaussianModel()
-        else:
-            msg = f"Unknown model: {name}"
-            raise ValueError(msg)
-    except ImportError as e:
-        typer.echo(f"Error importing model '{name}': {e}", err=True)
-        raise typer.Exit(code=1) from None
-
-
-def _simulate(model: Any, n_obs: int, rng: Any) -> tuple[Any, Any]:
-    """Simulate from a model."""
+    The library models expose ``simulate(T, seed) -> {'observations', 'states'}``.
+    """
     import numpy as np
 
-    simulate_fn = getattr(model, "simulate", None)
-    if simulate_fn is not None:
-        result = simulate_fn(n_obs=n_obs, rng=rng)
-        if isinstance(result, tuple) and len(result) == 2:
-            return result
-        states = getattr(result, "states", None)
-        obs = getattr(result, "observations", None)
-        if states is not None and obs is not None:
-            return np.asarray(states), np.asarray(obs)
-
-    # Fallback: manual simulation
-    state_list = []
-    obs_list = []
-    x = np.zeros(1)
-
-    for t in range(n_obs):
-        if hasattr(model, "transition"):
-            x = model.transition(x, t, rng)
-        else:
-            x = x + rng.standard_normal(x.shape) * 0.1
-        if hasattr(model, "observation"):
-            y = model.observation(x, t, rng)
-        else:
-            y = x + rng.standard_normal(x.shape) * 0.5
-        state_list.append(x.copy())
-        obs_list.append(y.copy())
-
-    return np.array(state_list), np.array(obs_list)
+    result = model.simulate(n_obs, seed=seed)
+    states = np.asarray(result["states"])
+    observations = np.asarray(result["observations"])
+    return states, observations

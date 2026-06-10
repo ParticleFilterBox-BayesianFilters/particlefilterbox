@@ -12,13 +12,15 @@ pip install -e ".[dev]"
 
 ```python
 from particlefilterbox.core import ParticleCloud, PFConfig
-from particlefilterbox.resampling import systematic
+from particlefilterbox.resampling import systematic_resample
 
 config = PFConfig(n_particles=1000, resampling='systematic')
+config.validate()
+
 cloud = ParticleCloud(n_particles=1000, k_states=1)
 cloud.set_uniform_weights()
 
-indices = systematic(cloud.normalized_weights)
+indices = systematic_resample(cloud.normalized_weights)
 cloud.resample(indices)
 ```
 

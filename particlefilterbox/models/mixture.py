@@ -8,9 +8,10 @@ Uses log-sum-exp for numerical stability.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Any
 
 
 class Mixture:
